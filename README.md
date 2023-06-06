@@ -52,7 +52,7 @@ Para cada vaso sera necessário
 Manual de Instalação
 --------------------
 
-Para utilizar o SmartGrow, basta conectar o Arduino ao computador e baixar o código-fonte disponível neste repositório.
+Para utilizar o SmartGrow, basta conectar o Arduino ao computador e baixar o [código-fonte](./src/codigo_fonte.ino) disponível neste repositório.
 Siga as conexões da imagem a baixo:
 ![Conexões do Arduino](images/arduino_connections.png)
 Apos conectar todos os sensores da forma apropriada, você deve:
