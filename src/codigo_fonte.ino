@@ -1,4 +1,3 @@
-
 #include <LiquidCrystal.h>
 
 //Definindo os pinos dos sensores
@@ -10,9 +9,9 @@
 //Definindo os pinos do atuadores
 #define Bulb 11
 #define Ventilador 10
-#define Aquecedor
-#define UmidificadorAr
-#define Irrigador
+#define Aquecedor 9
+#define UmidificadorAr 8
+#define Irrigador 7
 
 //Iniciando Variaveis do Sistema
 int seconds = 0;
@@ -22,16 +21,35 @@ int umidadeAir = 0;
 float tempAir = 0;
 int valueLDR = 0;
 
+// TempoSys = [Horas, Minutos, Segundos]
+
+int TempoSys[3]; // Tempo do sistema
+int TempoSol[3]; // Tempo do sol registrado pelo sistema
+int TempoIdeal[3]; // Tempo ideal de sol para crescimento da planta
+int TempoNascerSol[3]; // Horário que o sol nasce no local
+int TempoPorSol[3]; // Horário que o sol se poem no local
+
+long lastTimeSecondRecorded = 0;
+
+
+boolean HighAirTemp = false;
+boolean LowAirTemp = false;
+boolean LowSoloUmid = false;
+boolean LowAirUmid = false;
+boolean LowSun = false;
+
+
+
 
 // PARAMETROS:
 //float umidadeSoloMax = 0;
-float umidadeSoloMin = 0;
+float umidadeSoloMin = 10;
 
-float umidadeAirMax = 60;
-float umidadeAirMin = 0;
+//float umidadeAirMax = 20;
+float umidadeAirMin = 10;
 
-float tempAirMax = 0;
-float tempAirMin = 0;
+float tempAirMax = 20;
+float tempAirMin = 5;
 
 
 long tempOfSun = 0;
@@ -40,6 +58,8 @@ long tempOfSun = 0;
 long lastTime = millis(); // Ultima alteração do tipo de informação
 long wait = 3 * 1000; // Intervalo entre as informações
 int optionSelect = 1; // Tipo de informação a imprimir
+boolean showSunTime = false; // Variável para definir se sera apresentado os lumens a receber ou o tempo de Sol
+// O Tempo de Sol vai aparecer quando o sol se por, dessa forma vai ser a lampada auxiliar 
 
 
 
@@ -58,11 +78,44 @@ void setup()
   
   pinMode(Bulb,OUTPUT);
   pinMode(Ventilador,OUTPUT);
-  //pinMode(Aquecedor,OUTPUT);
-  //pinMode(UmidificadorAr,OUTPUT);
-  //pinMode(Irrigador,OUTPUT);
+  pinMode(Aquecedor,OUTPUT);
+  pinMode(UmidificadorAr,OUTPUT);
+  pinMode(Irrigador,OUTPUT);
   
   imprimir(optionSelect);
+
+  for(int i = 0; i < 3; i++)
+  {
+    TempoSol[i] = 0;
+  }
+
+  /*
+  EXEMPLO DE ARRAYS DE TEMPO
+  array[0] = Horas
+  array[1] = Minutos
+  array[2] = Segundos
+  */
+
+  // Sistema foi iniciado as 13:00
+  TempoSys[0] = 17;
+  TempoSys[1] = 59;
+  TempoSys[2] = 0;
+
+  // Sol nasce as 6:00
+  TempoNascerSol[0] = 6;
+  TempoNascerSol[1] = 0;
+  TempoNascerSol[2] = 0;
+
+  // Sol se poem as 18:00
+  TempoPorSol[0] = 18;
+  TempoPorSol[1] = 0;
+  TempoPorSol[2] = 0;
+
+  // Tempo ideal de sol para a planta é 4hrs e 30min
+  TempoIdeal[0] = 0;
+  TempoIdeal[1] = 2;
+  TempoIdeal[2] = 0;
+
 }
 
 void loop()
@@ -72,37 +125,36 @@ void loop()
   umidadeAir = readUmidadeAir();
   tempAir = readTemp();
   valueLDR = readLuz();
-  digitalWrite(Ventilador, LOW);
+
+  boolean isSunny = false;
+  if(valueLDR > 300)
+    isSunny = true;
+
+  // Atualizando Atuadores
+  HighAirTemp = (tempAir > tempAirMax);
+  LowAirTemp = (tempAir < tempAirMin);
+  LowSoloUmid = (umidadeSolo < umidadeSoloMin);
+  LowAirUmid = (umidadeAir < umidadeAirMin);
   
-  // AÇÕES DO SISTEMA
-  if(umidadeSolo < umidadeSoloMin)
-  {
-    //Ligue a mangueira
+  ativarAtuadores();
+  
+  if(TempoMaior(TempoSys, TempoPorSol)){ // O Sol se Pos
+    if(TempoMaior(TempoIdeal, TempoSol))
+    {
+      isSunny = true;
+      LowSun = true;
+    }
+    else
+    {
+      isSunny = false;
+      LowSun = false;
+    }
+    showSunTime = true;
   }
   
-  if(umidadeAir < umidadeAirMin)
-  {
-    //Ligue o Umidificador
-  }
-  else if(umidadeAir > umidadeAirMax)
-  {
-    //Ligue o ventilador
-    digitalWrite(Ventilador, HIGH);
-  }
   
-  if(tempAir < tempAirMin)
-  {
-    //Ligue o Aquecedor
-  }
-  else if(tempAir > tempAirMax)
-  {
-    //Ligue o ventilador
-    digitalWrite(Ventilador, HIGH);
-  }
-  
-  /*FAZER LOGICA PARA LIGAR A LAMPADA SUPLEMENTAR COM O TEMPO DE SOL*/
-  
-  
+  // ATUALIZANDO VALORES DOS TEMPOS
+  AtualizarRelogio(isSunny);
   
   
   //ATUALIZANDO INFORMAÇÕES DO LCD
@@ -137,7 +189,6 @@ int readUmidadeSolo(){return (int)((long)analogRead(UmidSoloPin) * 100 / 876);}
 
 int readUmidadeAir(){return (int)((long)analogRead(UmidAirPin) * 100 / 1023);}
 
-
 // Função para converter o valor do LDR em lumens
 float converterParaLumens(int valorLDR){
     // Mapeamento do valor do LDR para a faixa de lumens desejada
@@ -155,10 +206,118 @@ float converterParaLumens(int valorLDR){
 }
 
 
-
 //=*=*=*=*=*=*=*=*=*=*=*=*=*=*=* Metodos de ação =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
+void AtualizarRelogio(boolean isSunny){
+	if(millis() - lastTimeSecondRecorded >= 1000)
+    {
+      TempoSys[2] += 1; // + Segundos
+      if(TempoSys[2] >= 60)
+      {
+        TempoSys[2] = 0;
+        TempoSys[1] = TempoSys[1] + 1; // + Minutos
+        if(TempoSys[1] >= 60)
+        {
+          TempoSys[1] = 0;
+          TempoSys[0] = TempoSys[0] + 1; // + Horas
+          if(TempoSys[0] >= 24)
+          {
+            TempoSys[0] = 0;
+            // Reiniciando tempo de sol
+            TempoSol[2] = 0;
+            TempoSol[1] = 0;
+            TempoSol[0] = 0;
+          }
+        }
+      }
+      // Atualizando tempo de sol
+      if(isSunny)
+      {
+        TempoSol[2] = TempoSol[2] + 1; // + Segundos
+        if(TempoSol[2] >= 60)
+        {
+          TempoSol[2] = 0;
+          TempoSol[1] = TempoSol[1] + 1; // + Minutos
+          if(TempoSol[1] >= 60)
+          {
+            TempoSol[1] = 0;
+            TempoSol[0] = TempoSol[0] + 1; // + Horas
+            if(TempoSol[0] >= 24)
+            {
+              TempoSol[0] = 0;
+            }
+          }
+        }
+      }
 
+      lastTimeSecondRecorded += 1000; // Adiciona mais um segundo, dessa forma se entrar com o tempo quebrado é possível ajustar na proxima
+      Serial.print(TempoSys[0]);
+      Serial.print("hrs ");
+      Serial.print(TempoSys[1]);
+      Serial.print("min ");
+      Serial.print(TempoSys[2]);
+      Serial.println("sec ");
+
+    }
+}
+
+void ativarAtuadores(){
+  if(HighAirTemp){
+    digitalWrite(Ventilador, HIGH);
+  }
+  else if(LowAirTemp){
+    digitalWrite(Aquecedor, HIGH);
+  }
+
+  if(LowSoloUmid){
+    digitalWrite(Irrigador, HIGH);
+  }
+  if(LowAirUmid){
+    digitalWrite(UmidificadorAr, HIGH);
+  }
+  if(LowSun){
+    digitalWrite(Bulb, HIGH);
+  }
+
+  if(!HighAirTemp){
+    digitalWrite(Ventilador, LOW);
+  }
+  else if(!LowAirTemp){
+    digitalWrite(Aquecedor, LOW);
+  }
+  
+  if(!LowSoloUmid){
+    digitalWrite(Irrigador, LOW);
+  }
+  if(!LowAirUmid){
+    digitalWrite(UmidificadorAr, LOW);
+  }
+  if(!LowSun){
+    digitalWrite(Bulb, LOW);
+  }
+}
+
+boolean TempoMaior(int Tempo1[], int Tempo2[])
+{
+  if(Tempo1[0] > Tempo2[0])
+    return true; // Hora é maior
+  else if(Tempo1[0] == Tempo2[0])
+  {
+    if(Tempo1[1] > Tempo2[1])
+      return true; // Hora igual e minuto maior
+    else if(Tempo1[1] == Tempo2[1])
+    {
+      if(Tempo1[2] > Tempo2[2])
+        return true; // Hora e minutos iguais com segundos maiores
+      else
+        return false; // Hora, Minutos e Segundos iguais ou menores
+    }
+    else
+      return false; // Hora igual mas minutos menores
+  }
+  else
+    return false; // Hora menor
+}
 
 // ============================== METODOS DE IMPRESSÃO ================================
 
@@ -193,13 +352,19 @@ void imprimir(int option)
     	break;
     
     case 4: // LUZ
+    // Verificar se vai ser apresentado o lumens ou o tempo de sol registrado ate o momento
+      if(!showSunTime)
+      {
     	lcd_1.setCursor(0, 0);
     	lcd_1.print("LUZ:");
     	atualizarValorLCD(option);
     	break;
-    
-    case 5: // TEMPO DE SOL
-    	break;
+      }else
+      {
+        lcd_1.setCursor(0, 0);
+        lcd_1.print("Tempo Sol:");
+        atualizarValorLCD(option);
+      }
   }
 }
 
@@ -259,13 +424,19 @@ void atualizarValorLCD(int option)
     	break;
     
     case 4: // LUZ
-    	lcd_1.setCursor(0, 1);
-    	lcd_1.print(valueLDR);
-    	lcd_1.print(" lux");
-    	break;
-    
-    case 5: // TEMPO DE SOL
-    	break;
+      if(!showSunTime){
+        lcd_1.setCursor(0, 1);
+        lcd_1.print(valueLDR);
+        lcd_1.print(" lux");
+        break;
+      }else
+      {
+        lcd_1.setCursor(0, 1);
+        lcd_1.print(TempoSol[0]);
+        lcd_1.print("hrs ");
+        lcd_1.print(TempoSol[1]);
+        lcd_1.print("mins");
+      }
   }
 }
 
