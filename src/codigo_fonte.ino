@@ -21,6 +21,8 @@ int umidadeAir = 0;
 float tempAir = 0;
 int valueLDR = 0;
 
+int optionSelect = 1; // Tipo de informação a imprimir
+long lastTime = millis(); // Ultima alteração do tipo de informação
 
 // TempoSys = [Horas, Minutos, Segundos]
 
@@ -53,9 +55,9 @@ float tempAirMax = 20;
 float tempAirMin = 5;
 
 
-long lastTime = millis(); // Ultima alteração do tipo de informação
+
 long wait = 3 * 1000; // Intervalo entre as informações
-int optionSelect = 1; // Tipo de informação a imprimir
+
 
 
 
