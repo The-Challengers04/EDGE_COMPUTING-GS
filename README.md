@@ -54,7 +54,8 @@ Manual de Instalação
 
 Para utilizar o SmartGrow, basta conectar o Arduino ao computador e baixar o [código-fonte](./src/codigo_fonte.ino) disponível neste repositório.
 Siga as conexões da imagem a baixo:
-![Conexões do Arduino](images/arduino_connections.png)
+![Conexões do Arduino](./images/Conexoes.png)
+Esse projeto pode ser encontrado em [Tinkercad](https://www.tinkercad.com/things/4YimeJ5OC37?sharecode=45FaX-erHq77hYURw5Lud0VF2Xva2AGit7TTR04ifFQ)
 Apos conectar todos os sensores da forma apropriada, você deve:
 
 1. Conectar o Sensor de Umidade do Solo na terra do vaso
@@ -65,6 +66,63 @@ Apos conectar todos os sensores da forma apropriada, você deve:
 6. Posicione o ventilador na parede da prateleira em direção a saída
 7. Posicione o umidificador na prateleira
 
+#### Configurações do codigo:
+Para que o sistema funcione adequadamente, é preciso definir alguns parâmetros
+
+```C++
+// PARAMETROS:
+float umidadeSoloMin = 10; // Defina a taxa minima de umidade do solo em porcentagem
+
+float umidadeAirMin = 10; // Defina a taxa minima de umidade do ar em porcentagem
+
+float tempAirMax = 20; // Defina a Temperatura maxima do ar em graus célcios
+float tempAirMin = 5; // Defina a Temperatura minima do ar em graus célcios
+
+
+long wait = 3 * 1000; // Intervalo entre as informações apresentada no display
+```
+
+agora dentro do metodo ```void setup()```
+
+```C++
+  /*
+  EXEMPLO DE ARRAYS DE TEMPO
+  array[0] = Horas
+  array[1] = Minutos
+  array[2] = Segundos
+*/
+
+  // Defina o horário que o sistema esta a iniciar
+  TempoSys[0] = 17;
+  TempoSys[1] = 59;
+  TempoSys[2] = 0;
+
+  // Defina o horário que o sol nasce na região
+  TempoNascerSol[0] = 6;
+  TempoNascerSol[1] = 0;
+  TempoNascerSol[2] = 0;
+
+  // Defina o horário que o sol se poem na região
+  TempoPorSol[0] = 18;
+  TempoPorSol[1] = 0;
+  TempoPorSol[2] = 0;
+
+  // Defina o tempo ideal de luz sobre a planta para seu crescimento
+  TempoIdeal[0] = 0;
+  TempoIdeal[1] = 2;
+  TempoIdeal[2] = 0;
+```
+
+Regras do Sistema
+--------
+
+* Se a quantidade de tempo ideal de luz não for cumprido até o momento do por do sol, a lampada auxiliar vai ser acionada até completar o tempo
+  * A lampada so vai ficar ativa ate o final do dia (00:00/Meia Noite)
+* Se a terra estiver abaixo da umidade minima, a bomba de água vai ser ativa
+* Se a umidade do ar estiver abaixo do mínimo, o umidificador de ar vai ser ativo
+* Se a temperatura do ar estiver acima do máximo, o ventilador vai ser ativo
+* Se a temperatura do ar estiver abaixo do mínimo, o aquecedor vai ser ativo
+
 Contribuindo
 ------------
 
@@ -74,4 +132,3 @@ Licença
 -------
 
 O projeto SmartGrow é licenciado sob a [Licença MIT](LICENSE), o que significa que você é livre para usar, modificar e distribuir o projeto, desde que atribua a devida autoria.
-
