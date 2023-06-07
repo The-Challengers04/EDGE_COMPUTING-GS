@@ -21,6 +21,7 @@ int umidadeAir = 0;
 float tempAir = 0;
 int valueLDR = 0;
 
+
 // TempoSys = [Horas, Minutos, Segundos]
 
 int TempoSys[3]; // Tempo do sistema
@@ -38,28 +39,23 @@ boolean LowSoloUmid = false;
 boolean LowAirUmid = false;
 boolean LowSun = false;
 
+boolean showSunTime = false; // Variável para definir se sera apresentado os lumens a receber ou o tempo de Sol
+// O Tempo de Sol vai aparecer quando o sol se por, dessa forma vai ser a lampada auxiliar 
 
 
 
 // PARAMETROS:
-//float umidadeSoloMax = 0;
 float umidadeSoloMin = 10;
 
-//float umidadeAirMax = 20;
 float umidadeAirMin = 10;
 
 float tempAirMax = 20;
 float tempAirMin = 5;
 
 
-long tempOfSun = 0;
-
-
 long lastTime = millis(); // Ultima alteração do tipo de informação
 long wait = 3 * 1000; // Intervalo entre as informações
 int optionSelect = 1; // Tipo de informação a imprimir
-boolean showSunTime = false; // Variável para definir se sera apresentado os lumens a receber ou o tempo de Sol
-// O Tempo de Sol vai aparecer quando o sol se por, dessa forma vai ser a lampada auxiliar 
 
 
 
@@ -88,13 +84,12 @@ void setup()
   {
     TempoSol[i] = 0;
   }
-
   /*
   EXEMPLO DE ARRAYS DE TEMPO
   array[0] = Horas
   array[1] = Minutos
   array[2] = Segundos
-  */
+*/
 
   // Sistema foi iniciado as 13:00
   TempoSys[0] = 17;
