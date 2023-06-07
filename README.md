@@ -44,10 +44,20 @@ Para cada vaso sera necessário
     ##### Atuadores
     |Componente|Quantidade|
     |:-----------:|:-----------:|
-    lampada led fotossintetizante|1
+    Lampada led fotossintetizante|1
     Bomba de Água|1
-    mangueira|1
-    Modulo Rele|1
+    Umidificador de Ar|1
+    Aquecedor de Ar|1
+    Ventilador|1
+    
+    ##### Outros
+    |Componente|Quantidade|
+    |:-----------:|:-----------:|
+    Modulo Rele|4
+    Resistor 220Ω|1
+    Resistor 1kΩ|2
+    Potenciometro|1
+    Transistor|1
 
 Manual de Instalação
 --------------------
